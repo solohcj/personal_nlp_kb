@@ -25,13 +25,17 @@ class Encoder(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.tag = True
         
-        #Embedding layer
+        # Embedding layer
         self.embedding = nn.Embedding(num_embeddings=self.input_size, embedding_dim=self.embedding_size, padding_idx=0)
         self.embedding.weight = nn.Parameter(torch.tensor(self.embedding_matrix, dtype=torch.float32))
         self.embedding.weight.requires_grad = False
         
         # Shape (embedding_dims, hidden_size, num_layers)
         self.lstm = nn.LSTM(self.embedding_size, self.hidden_size, self.num_layers, batch_first=True, bidirectional=True, dropout=dropout)
+        
+#         # Linear layer for encoding
+#         self.fc = nn.Linear(self.hidden_size*2, 20)
+        
         
     # Shape of x (batch_size, seq_len)
     def forward(self, x):
@@ -42,7 +46,13 @@ class Encoder(nn.Module):
         # Shape (hs, cs) (num_layers, batch_size, hidden_size)
         outputs, (hidden_state, cell_state) = self.lstm(embedding)
         
-        return outputs, hidden_state, cell_state
+#         output = self.dropout(outputs[:,-1,:])
+#         output = self.fc(output)
+        
+#         return outputs, hidden_state, cell_state
+        return outputs[:,-1,:]
+
+#         return output
     
 class SiameseNetwork(nn.Module):
     def __init__(self, encoder):
@@ -54,9 +64,16 @@ class SiameseNetwork(nn.Module):
         
     def forward(self, anchor, comparison):
         # Encode both anchor and comparison with same encoder
-        anchor_output, _, _ = self.encoder(anchor)
-        comparison_output, _, _ = self.encoder(comparison)
+#         anchor_output, _, _ = self.encoder(anchor)
+#         comparison_output, _, _ = self.encoder(comparison)
+        anchor_output = self.encoder(anchor)
+        comparison_output = self.encoder(comparison)
         
-        output = self.cosinesimilarity(anchor_output[:,-1,:], comparison_output[:,-1,:])
+        output = self.cosinesimilarity(anchor_output, comparison_output)
+
+#         anchor_output = self.encoder(anchor)
+#         comparison_output = self.encoder(comparison)
+        
+#         output = self.cosinesimilarity(anchor_output, comparison_output)
         
         return output
