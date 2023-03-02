@@ -1,10 +1,9 @@
 import torch
 import torch.nn as nn
 
-
-class Encoder(nn.Module):
+class BiLSTM_Attention_Classifier(nn.Module):
     def __init__(self, input_size, embedding_size, embedding_matrix, hidden_size, num_layers, dropout, batch_size):
-        super(Encoder, self).__init__()
+        super(BiLSTM_Attention_Classifier, self).__init__()
         
         # Load in embedding matrix
         self.embedding_matrix = embedding_matrix
@@ -25,6 +24,12 @@ class Encoder(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.tag = True
         
+        # Batch size for attention query shaping
+        self.batch_size = batch_size
+        
+        # Attention Layer
+        self.attn = nn.MultiheadAttention(embed_dim=self.hidden_size*2, num_heads=4, batch_first=True)
+        
         # Embedding layer
         self.embedding = nn.Embedding(num_embeddings=self.input_size, embedding_dim=self.embedding_size, padding_idx=0)
         self.embedding.weight = nn.Parameter(torch.tensor(self.embedding_matrix, dtype=torch.float32))
@@ -32,6 +37,10 @@ class Encoder(nn.Module):
         
         # Shape (embedding_dims, hidden_size, num_layers)
         self.lstm = nn.LSTM(self.embedding_size, self.hidden_size, self.num_layers, batch_first=True, bidirectional=True, dropout=dropout)
+        
+        # Linear layer for encoding
+        self.fc = nn.Linear(self.hidden_size*2, 20)
+        
         
     # Shape of x (batch_size, seq_len)
     def forward(self, x):
@@ -41,18 +50,13 @@ class Encoder(nn.Module):
         # Shape outputs (batch_size, seq_len, hidden_size)
         # Shape (hs, cs) (num_layers, batch_size, hidden_size)
         outputs, (hidden_state, cell_state) = self.lstm(embedding)
+        
+        query = torch.ones(outputs.size()[0], 1, outputs.size()[2]).to(device) # Note: ".to(device)"" will not work when imported on another script, use alternatives!
+        
+        attn_outputs = self.attn(query=query, key=outputs, value=outputs)
+        
+        output = self.dropout(outputs[:,-1,:])
+        output = self.fc(output)
 
-        return outputs[:,-1,:]
-    
-    
-class SiameseNetwork(nn.Module):
-    def __init__(self, encoder):
-        super(SiameseNetwork, self).__init__()
-        self.encoder = encoder        
-        
-    def forward(self, anchor, comparison):
-        # Encode both anchor and comparison with same encoder
-        anchor_output = self.encoder(anchor)
-        comparison_output = self.encoder(comparison)
-        
-        return anchor_output, comparison_output
+        return output
+
