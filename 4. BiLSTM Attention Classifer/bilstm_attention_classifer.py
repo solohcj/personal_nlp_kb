@@ -14,7 +14,7 @@ class BiLSTM_Attention_Classifier(nn.Module):
         # Output size of the word embedding NN
         self.embedding_size = embedding_size
         
-        #Domension of the NN's inside the LSTM Cell / (hs, cs)'s dimension
+        #Dimension of the NN's inside the LSTM Cell / (hs, cs)'s dimension
         self.hidden_size = hidden_size
         
         # Number of layers in the lstm
@@ -54,9 +54,11 @@ class BiLSTM_Attention_Classifier(nn.Module):
         query = torch.ones(outputs.size()[0], 1, outputs.size()[2]).to(device) # Note: ".to(device)"" will not work when imported on another script, use alternatives!
         
         attn_outputs = self.attn(query=query, key=outputs, value=outputs)
-        
-        output = self.dropout(outputs[:,-1,:])
-        output = self.fc(output)
+
+        output = self.dropout(attn_outputs[:,-1,:])
+        output = self.fc(output)        
+        # output = self.dropout(outputs[:,-1,:])
+        # output = self.fc(output)
 
         return output
 
