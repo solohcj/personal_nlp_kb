@@ -7,7 +7,7 @@ nlp = spacy.load("en_core_web_sm")
 class doc_classifier(nn.Module):
     def __init__(self, encoder, dropout):
         super(doc_classifier, self).__init__()
-        # self.encoder = encoder
+        self.encoder = encoder
         # self.output_hidden_dim = encoder.config.dim
 
         # self.attn = nn.MultiheadAttention(embed_dim=self.hidden_size*2, num_heads=4, batch_first=True)
@@ -17,8 +17,8 @@ class doc_classifier(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
 
-    def forward(self, document):
-        for sent in document:
+    def forward(self, document_seq, document_mask):
+        for document in document_seq:
             encoded_sent = 
 
 
