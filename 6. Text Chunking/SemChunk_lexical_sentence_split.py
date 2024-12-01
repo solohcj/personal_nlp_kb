@@ -1,13 +1,11 @@
+import re
 import time
-import spacy
 import torch
 import numpy as np
 import torch.nn.functional as F
 
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Load in nlp model
-nlp = spacy.load("en_core_web_sm")
 
 #Mean Pooling - Take attention mask into account for correct averaging
 def mean_pooling(model_output, attention_mask):
@@ -23,7 +21,8 @@ class Document:
     def __get_sentences(self):
         __get_sentences_st = time.time()
         
-        self.single_sentences_list = [str(sentence) for sentence in nlp(self.document).sents]
+        sentence_endings = r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|\!)\s"
+        self.single_sentences_list = re.split(sentence_endings, self.document) 
         
         __get_sentences_et = time.time()
         __get_sentences_timing = __get_sentences_et - __get_sentences_st
@@ -36,7 +35,7 @@ class Document:
         # Tokenize sentences
         encoded_input = self.tokenizer(self.single_sentences_list, padding=True, truncation=True, return_tensors='pt')
         self.respective_sentence_length = torch.sum(encoded_input["attention_mask"], axis=1)
-        
+
         __get_token_length_et = time.time()
         __get_token_length_timing = __get_token_length_et - __get_token_length_st
         print ("__get_token_length_timing: {}ms".format(__get_token_length_timing*1000))
