@@ -42,17 +42,20 @@ class doc_classifier(nn.Module):
                 chunk_encoding = self.encoder(document_seq[batch_index, chunk_index, :].long(), document_mask[batch_index, chunk_index, :].long()).last_hidden_state[0,0,:] # First of the batch (cause only 1 chunk being embedded) and the first hidden_state
                 doc_embeddings[batch_index, chunk_index] = chunk_encoding
         
-        query = torch.ones(doc_embeddings.size()[0], 1, self.output_hidden_dim).float().to(self.device) # (batch_size, target_seq_length=1, embedding_dim)
+        # query = torch.ones(doc_embeddings.size()[0], 1, self.output_hidden_dim).float().to(self.device) # (batch_size, target_seq_length=1, embedding_dim)
+        
+        output = torch.mean(doc_embeddings, 1)
+        # print (output)
         
         # # print (doc_embeddings.type(), query.type())
         # # print (doc_embeddings.device, query.device)
         
-        attn_outputs = self.attn(query=query, key=doc_embeddings, value=doc_embeddings)
+        # attn_outputs = self.attn(query=query, key=doc_embeddings, value=doc_embeddings)
 
         # print (attn_outputs)
         # print (attn_outputs[0].size())
         
-        output = self.dropout(attn_outputs[0][:,-1,:])
+        # output = self.dropout(attn_outputs[0][:,-1,:])
         output = self.fc(output)
 
         return output

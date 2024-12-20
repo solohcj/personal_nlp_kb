@@ -4,6 +4,13 @@ import torch.nn as nn
 
 nlp = spacy.load("en_core_web_sm")
 
+# def mean_pooling(model_output, attention_mask):
+#     token_embeddings = model_output[0] #First element of model_output contains all token embeddings
+#     input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+#     return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+
+
+
 class doc_classifier(nn.Module):
     def __init__(self, encoder, dropout, device):
         super(doc_classifier, self).__init__()
@@ -34,11 +41,11 @@ class doc_classifier(nn.Module):
             for chunk_index in range(chunk_length):
                 chunk_encoding = self.encoder(document_seq[batch_index, chunk_index, :].long(), document_mask[batch_index, chunk_index, :].long()).last_hidden_state[0,0,:] # First of the batch (cause only 1 chunk being embedded) and the first hidden_state
                 doc_embeddings[batch_index, chunk_index] = chunk_encoding
-
+        
         query = torch.ones(doc_embeddings.size()[0], 1, self.output_hidden_dim).float().to(self.device) # (batch_size, target_seq_length=1, embedding_dim)
         
-        # print (doc_embeddings.type(), query.type())
-        # print (doc_embeddings.device, query.device)
+        # # print (doc_embeddings.type(), query.type())
+        # # print (doc_embeddings.device, query.device)
         
         attn_outputs = self.attn(query=query, key=doc_embeddings, value=doc_embeddings)
 
