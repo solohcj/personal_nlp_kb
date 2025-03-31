@@ -161,13 +161,12 @@ class Document:
 
         # Will attempt to do the previous iteration of calculating subsequent embedding pairs
         # through the use of a one-time matrix multiplication
-        
+
         # Get all embeddings from dictionary first
         all_embeddings = [self.embeddings[index]['embedding'].reshape(-1,1) for index in self.embeddings]
         all_embeddings = torch.cat(all_embeddings, axis=1).T
         all_cosine_distances = 1-cosine_similarity(all_embeddings, all_embeddings)
         relevant_cosine_distances = all_cosine_distances.diagonal(1).tolist()
-
 
         self.semantic_distances = relevant_cosine_distances
 
@@ -180,16 +179,32 @@ class Document:
     def __calculate_outliners(self, breakpoint_percentile_threshold):
         __calculate_outliners_st = time.time()
 
-        # We need to get the distance threshold that we'll consider an outlier
-        # We'll use numpy .percentile() for this
-        breakpoint_distance_threshold = np.percentile(self.semantic_distances, breakpoint_percentile_threshold) # If you want more chunks, lower the percentile cutoff
-        
-        # Then we'll get the index of the distances that are above the threshold. This will tell us where we should split our text
-        indices_above_thresh = [i for i, x in enumerate(self.semantic_distances) if x > breakpoint_distance_threshold] # The indices of those breakpoints on your list
-        self.indices_above_thresh = indices_above_thresh
+        """RESOLVING THE BUG HERE, 
+            mainly for single sentence which cannot calculate percentile?? - SOLO
+        """
+
+        """STILL GOT BUG AT THE BREAKPOINT_DISTANCE_THRESHOLD WHEN TOKEN_LIMIT=5 FOR 'first.second. third.'
+            This is because the loop made the threshold go beyond 0 into -5 liao, catch this behavior
+        """
+
+        if len(self.semantic_distances)==0: # if there is only one sentence then there would be no distance!
+            self.indices_above_thresh = []
+
+        # elif len(self.semantic_distances)==1: # if there is only 1 distance then cannot apply percentile?
+
+        else:
+            # We need to get the distance threshold that we'll consider an outlier
+            # We'll use numpy .percentile() for this
+
+            print (self.semantic_distances, breakpoint_percentile_threshold)
+            breakpoint_distance_threshold = np.percentile(self.semantic_distances, breakpoint_percentile_threshold) # If you want more chunks, lower the percentile cutoff
+
+            # Then we'll get the index of the distances that are above the threshold. This will tell us where we should split our text
+            indices_above_thresh = [i for i, x in enumerate(self.semantic_distances) if x > breakpoint_distance_threshold] # The indices of those breakpoints on your list
+            self.indices_above_thresh = indices_above_thresh
 
         __calculate_outliners_et = time.time()
-        __calculate_outliners_timing = __calculate_outliners_et - __calculate_outliners_st
+        # __calculate_outliners_timing = __calculate_outliners_et - __calculate_outliners_st
         # print ("__calculate_outliners_timing: {}ms".format(__calculate_outliners_timing*1000))
         # return indices_above_thresh
         return None
@@ -197,10 +212,23 @@ class Document:
     def __get_chunk_lengths(self):
         __get_chunk_lengths_st = time.time()
 
-        index_range_of_chunks = [range(index_pair[0], index_pair[1]) for index_pair in [chunk_index_pair[1] for chunk_index_pair in self.chunks]]
-        token_lengths = [sum([self.combined_sentences[each_index]['token_length'].item() for each_index in each_index_range]) for each_index_range in index_range_of_chunks]
-        chunk_lengths = [(chunk[0], token_length) for chunk, token_length in zip(self.chunks, token_lengths)]
+        """RESOLVING THE BUG HERE?? - SOLO"""
 
+        # print (len(self.chunks))
+        print (self.chunks)
+        if len(self.chunks)==1: # Cases where the there is only 1 final chunk, could be cause of single sentence or that the only 2 sentences are combined!
+            chunk_lengths = [(chunk[0], token_length) for chunk, token_length in zip(self.chunks, [sum(self.respective_sentence_length)])]
+
+        elif len(self.chunks)==2: # Cases where the there is 2 chunks
+            # chunk_lengths = [(self.chunks, sum(self.respective_sentence_length))]
+            chunk_lengths = [(chunk[0], token_length) for chunk, token_length in zip(self.chunks, self.respective_sentence_length)]
+
+        else:
+            index_range_of_chunks = [range(index_pair[0], index_pair[1]) for index_pair in [chunk_index_pair[1] for chunk_index_pair in self.chunks]]
+            token_lengths = [sum([self.combined_sentences[each_index]['token_length'].item() for each_index in each_index_range]) for each_index_range in index_range_of_chunks]
+            chunk_lengths = [(chunk[0], token_length) for chunk, token_length in zip(self.chunks, token_lengths)]
+
+        # print (chunk_lengths)
         self.chunk_lengths = chunk_lengths
 
         __get_chunk_lengths_et = time.time()
@@ -218,23 +246,48 @@ class Document:
         # Create a list to hold the grouped sentences
         chunks = []
         
-        # Iterate through the breakpoints to slice the sentences
-        for index in self.indices_above_thresh:
-            # The end index is the current breakpoint
-            end_index = index
+        # print (self.indices_above_thresh)
+        # print (self.combined_sentences)
+
+        """RESOLVING THE BUG HERE??
+            THIS BUG ONLY APPEARS WHEN THERE ARE LESS THAN 3 SENTENCES
+            SO IN THE CASE OF 2 SENTENCES, THE `combined_sentence` OF BOTH THE FIRST 2 
+            IN `self.combined_sentences` SHOULD BE THE SAME (CAUSE THE SENTENCE COMBINATION
+            TAKES BEFORE AND AFTER.. IF NOTHING BEFORE WILL ONLY TAKE AFTER. AND FOR THE SECOND
+            ONE THERE IS NOTHING AFTER SO WILL ONLY TAKE BEFORE AND HENCE THE SAME)!!
+           - SOLO"""
         
-            # Slice the sentence_dicts from the current start index to the end index
-            group = self.combined_sentences[start_index:end_index + 1]
-            combined_text = ' '.join([d['sentence'] for d in group])
-            chunks.append((combined_text, (start_index, end_index)))
+        """STILL NEED TO CLEAN UP THE INDEX SHIT BRO"""
+
+        if (len(self.combined_sentences)==1): # For single sentence cases
+            chunks.append((self.combined_sentences[0]['combined_sentence'], (0,0)))
+
+        elif (len(self.combined_sentences)==2) & (sum(self.respective_sentence_length)<=self.token_limit): # For double sentence cases
+            chunks.append((self.combined_sentences[0]['combined_sentence'], (0,1)))
+
+        elif (len(self.combined_sentences)==2) & (sum(self.respective_sentence_length)>self.token_limit):
+            # print (self.combined_sentences)
+            for index in range(2): # Cause only 2 sentences
+                chunks.append((self.combined_sentences[index]['sentence'], (index, index)))
+
+        else:
+            # Iterate through the breakpoints to slice the sentences
+            for index in self.indices_above_thresh:
+                # The end index is the current breakpoint
+                end_index = index
             
-            # Update the start index for the next group
-            start_index = index + 1
-        
-        # The last group, if any sentences remain
-        if start_index < len(self.combined_sentences):
-            combined_text = ' '.join([d['sentence'] for d in self.combined_sentences[start_index:]])
-            chunks.append((combined_text, (start_index, end_index)))
+                # Slice the sentence_dicts from the current start index to the end index
+                group = self.combined_sentences[start_index:end_index + 1]
+                combined_text = ' '.join([d['sentence'] for d in group])
+                chunks.append((combined_text, (start_index, end_index)))
+                
+                # Update the start index for the next group
+                start_index = index + 1
+            
+            # The last group, if any sentences remain
+            if start_index < len(self.combined_sentences):
+                combined_text = ' '.join([d['sentence'] for d in self.combined_sentences[start_index:]])
+                chunks.append((combined_text, (start_index, end_index)))
 
         self.chunks = chunks
 
@@ -250,16 +303,25 @@ class Document:
         self.__calculate_outliners(self.starting_threshold)
         self.__get_chunks()
         self.__get_chunk_lengths()
-        max_token_length = max([chunk_pair[1] for chunk_pair in self.chunk_lengths])
-        print (self.starting_threshold, max_token_length)
-        
-        while max_token_length>self.token_limit:
-            self.starting_threshold -= self.step
-            self.__calculate_outliners(self.starting_threshold)
-            self.__get_chunks()
-            self.__get_chunk_lengths()
+
+        """RESOLVING THE BUG HERE?? - SOLO"""
+
+        print (self.chunk_lengths)
+        if len(self.chunk_lengths)>1: # Check if got more than 1 value, else cannot iterate!!
             max_token_length = max([chunk_pair[1] for chunk_pair in self.chunk_lengths])
-            # print (self.starting_threshold, max_token_length)
+            print (self.starting_threshold, max_token_length)
+
+            """STILL GOT BUG AT THE BREAKPOINT_DISTANCE_THRESHOLD WHEN TOKEN_LIMIT=5 FOR 'first.second. third.'
+                This is because the loop made the threshold go beyond 0 into -5 liao, catch this behavior
+            """
+
+            while max_token_length>self.token_limit:
+                self.starting_threshold -= self.step
+                self.__calculate_outliners(self.starting_threshold)
+                self.__get_chunks()
+                self.__get_chunk_lengths()
+                max_token_length = max([chunk_pair[1] for chunk_pair in self.chunk_lengths])
+                # print (self.starting_threshold, max_token_length)
 
         __get_optimal_chunks_et = time.time()
         __get_optimal_chunks_timing = __get_optimal_chunks_et - __get_optimal_chunks_st

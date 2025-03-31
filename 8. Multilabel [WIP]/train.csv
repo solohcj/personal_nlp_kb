@@ -1,0 +1,71 @@
+ID,TITLE,ABSTRACT,Computer Science,Physics,Mathematics,Statistics,Quantitative Biology,Quantitative Finance
+1.0,Reconstructing Subject-Specific Effect Maps,"  Predictive models allow subject-specific inference when analyzing disease
+related alterations in neuroimaging data. Given a subject's data, inference can
+be made at two levels: global, i.e. identifiying condition presence for the
+subject, and local, i.e. detecting condition effect on each individual
+measurement extracted from the subject's data. While global inference is widely
+used, local inference, which can be used to form subject-specific effect maps,
+is rarely used because existing models often yield noisy detections composed of
+dispersed isolated islands. In this article, we propose a reconstruction
+method, named RSM, to improve subject-specific detections of predictive
+modeling approaches and in particular, binary classifiers. RSM specifically
+aims to reduce noise due to sampling error associated with using a finite
+sample of examples to train classifiers. The proposed method is a wrapper-type
+algorithm that can be used with different binary classifiers in a diagnostic
+manner, i.e. without information on condition presence. Reconstruction is posed
+as a Maximum-A-Posteriori problem with a prior model whose parameters are
+estimated from training data in a classifier-specific fashion. Experimental
+evaluation is performed on synthetically generated data and data from the
+Alzheimer's Disease Neuroimaging Initiative (ADNI) database. Results on
+synthetic data demonstrate that using RSM yields higher detection accuracy
+compared to using models directly or with bootstrap averaging. Analyses on the
+ADNI dataset show that RSM can also improve correlation between
+subject-specific detections in cortical thickness data and non-imaging markers
+of Alzheimer's Disease (AD), such as the Mini Mental State Examination Score
+and Cerebrospinal Fluid amyloid-$\beta$ levels. Further reliability studies on
+the longitudinal ADNI dataset show improvement on detection reliability when
+RSM is used.
+",1.0,0.0,0.0,0.0,0.0,0.0
+2.0,Rotation Invariance Neural Network,"  Rotation invariance and translation invariance have great values in image
+recognition tasks. In this paper, we bring a new architecture in convolutional
+neural network (CNN) named cyclic convolutional layer to achieve rotation
+invariance in 2-D symbol recognition. We can also get the position and
+orientation of the 2-D symbol by the network to achieve detection purpose for
+multiple non-overlap target. Last but not least, this architecture can achieve
+one-shot learning in some cases using those invariance.
+",1.0,0.0,0.0,0.0,0.0,0.0
+3.0,Spherical polyharmonics and Poisson kernels for polyharmonic functions,"  We introduce and develop the notion of spherical polyharmonics, which are a
+natural generalisation of spherical harmonics. In particular we study the
+theory of zonal polyharmonics, which allows us, analogously to zonal harmonics,
+to construct Poisson kernels for polyharmonic functions on the union of rotated
+balls. We find the representation of Poisson kernels and zonal polyharmonics in
+terms of the Gegenbauer polynomials. We show the connection between the
+classical Poisson kernel for harmonic functions on the ball, Poisson kernels
+for polyharmonic functions on the union of rotated balls, and the Cauchy-Hua
+kernel for holomorphic functions on the Lie ball.
+",0.0,0.0,1.0,0.0,0.0,0.0
+4.0,A finite element approximation for the stochastic Maxwell--Landau--Lifshitz--Gilbert system,"  The stochastic Landau--Lifshitz--Gilbert (LLG) equation coupled with the
+Maxwell equations (the so called stochastic MLLG system) describes the creation
+of domain walls and vortices (fundamental objects for the novel nanostructured
+magnetic memories). We first reformulate the stochastic LLG equation into an
+equation with time-differentiable solutions. We then propose a convergent
+$\theta$-linear scheme to approximate the solutions of the reformulated system.
+As a consequence, we prove convergence of the approximate solutions, with no or
+minor conditions on time and space steps (depending on the value of $\theta$).
+Hence, we prove the existence of weak martingale solutions of the stochastic
+MLLG system. Numerical results are presented to show applicability of the
+method.
+",0.0,0.0,1.0,0.0,0.0,0.0
+5.0,Comparative study of Discrete Wavelet Transforms and Wavelet Tensor Train decomposition to feature extraction of FTIR data of medicinal plants,"  Fourier-transform infra-red (FTIR) spectra of samples from 7 plant species
+were used to explore the influence of preprocessing and feature extraction on
+efficiency of machine learning algorithms. Wavelet Tensor Train (WTT) and
+Discrete Wavelet Transforms (DWT) were compared as feature extraction
+techniques for FTIR data of medicinal plants. Various combinations of signal
+processing steps showed different behavior when applied to classification and
+clustering tasks. Best results for WTT and DWT found through grid search were
+similar, significantly improving quality of clustering as well as
+classification accuracy for tuned logistic regression in comparison to original
+spectra. Unlike DWT, WTT has only one parameter to be tuned (rank), making it a
+more versatile and easier to use as a data processing tool in various signal
+processing applications.
+",1.0,0.0,0.0,1.0,0.0,0.0
