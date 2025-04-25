@@ -317,6 +317,10 @@ class Document:
 
             while max_token_length>self.token_limit:
                 self.starting_threshold -= self.step
+                if self.starting_threshold<=0:
+                    break # If we iterate to the point where threshold is negative alr, should just break and return last result
+                          # Not a very good way to deal with too long sentences, cause if most granular sentence is alr too long then actually we will always keep iterating to threshold==0 then return this result.
+                    	  # Need to think of a better way to deal with this in the future!! -SOLO
                 self.__calculate_outliners(self.starting_threshold)
                 self.__get_chunks()
                 self.__get_chunk_lengths()
